@@ -6,7 +6,7 @@
     <title>Registro de Llamadas - UMES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilos específicos para replicar la tabla de la imagen */
+        /* Estilos específicos para replicar la tabla */
         .table-header th {
             border-right: 1px solid white;
             padding: 12px 16px;
@@ -23,6 +23,8 @@
         .table-row:nth-child(even) {
             background-color: #f9fafb;
         }
+        /* Para ocultar elementos */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen">
@@ -43,6 +45,14 @@
 
             <form id="callForm" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Recepcionista</label>
+                        <select id="recepcionista" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d] bg-white">
+                            <option value="Recepcionista 1">Brenda</option>
+                            <option value="Recepcionista 2">Andrea</option>
+                            <option value="Recepcionista 3">Mario</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
                         <input type="date" id="fecha" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
@@ -73,9 +83,6 @@
                     </div>
                 </div>
 
-                <!-- Recepcionista oculto (tú, trabajando solo) -->
-                <input type="hidden" id="recepcionista" value="Mario">
-
                 <div class="pt-2">
                     <button type="submit" class="bg-[#00553d] hover:bg-[#00402e] text-white font-medium py-2 px-6 rounded-md transition duration-200">
                         Guardar Registro
@@ -88,8 +95,8 @@
         <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex flex-col sm:flex-row justify-between items-center border border-gray-200 gap-4">
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-gray-700">Ver registros de:</span>
-                <input type="month" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#00553d]">
-                <button class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-1.5 px-4 rounded transition duration-200">
+                <input type="month" id="filtroMes" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                <button id="btnMostrarTodos" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-1.5 px-4 rounded transition duration-200">
                     Mostrar Todos
                 </button>
             </div>
@@ -107,13 +114,14 @@
                 <table class="w-full text-left whitespace-nowrap">
                     <thead class="bg-[#00553d] text-white table-header text-sm">
                         <tr>
-                            <th>Día/Fecha</th>
+                            <th>Fecha</th>
                             <th>Hora</th>
                             <th>Número</th>
                             <th>Nombres</th>
                             <th>Consulta / Trámite</th>
                             <th>Persona Indicada</th>
                             <th>Ext.</th>
+                            <th>Recepcionista</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
@@ -121,82 +129,217 @@
                         <!-- Los registros aparecerán aquí -->
                     </tbody>
                 </table>
-                <div id="emptyState" class="text-center py-8 text-gray-500 text-sm">
-                    No hay registros de llamadas. Llena el formulario para agregar uno.
+                <div id="emptyState" class="text-center py-8 text-gray-500 text-sm hidden">
+                    No hay registros de llamadas en el período seleccionado.
                 </div>
             </div>
         </div>
 
     </main>
 
-    <script>
-        document.getElementById('callForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            // Obtener valores
-            const fecha = document.getElementById('fecha').value;
-            const hora = document.getElementById('hora').value;
-            const numero = document.getElementById('numero').value || 'N/A';
-            const nombre = document.getElementById('nombre').value;
-            const consulta = document.getElementById('consulta').value;
-            const persona = document.getElementById('persona').value || 'N/A';
-            const extension = document.getElementById('extension').value || 'N/A';
-
-            // Formatear fecha de YYYY-MM-DD a DD/MM/YYYY
-            const dateObj = new Date(fecha + 'T00:00:00');
-            const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-
-            // Ocultar mensaje de estado vacío
-            document.getElementById('emptyState').style.display = 'none';
-
-            // Crear fila
-            const tbody = document.getElementById('tableBody');
-            const tr = document.createElement('tr');
-            tr.className = 'table-row hover:bg-gray-100 transition duration-150';
-
-            tr.innerHTML = `
-                <td>${formattedDate}</td>
-                <td>${hora}</td>
-                <td>${numero}</td>
-                <td class="font-medium">${nombre}</td>
-                <td class="whitespace-normal min-w-[200px]">${consulta}</td>
-                <td>${persona}</td>
-                <td>${extension}</td>
-                <td>
-                    <button onclick="deleteRow(this)" class="text-red-600 hover:text-red-800 font-medium text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50 transition duration-150">
+    <!-- Modal de Confirmación para Eliminar -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Eliminar Registro</h3>
+                <div class="mt-2 px-4 py-3">
+                    <p class="text-sm text-gray-500">¿Estás seguro de que deseas eliminar este registro de llamada? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="items-center px-4 py-3 flex justify-center gap-4 mt-2">
+                    <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none">
+                        Cancelar
+                    </button>
+                    <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none">
                         Eliminar
                     </button>
-                </td>
-            `;
+                </div>
+            </div>
+        </div>
+    </div>
 
-            // Insertar al inicio de la tabla
-            tbody.insertBefore(tr, tbody.firstChild);
+    <script>
+        // Variables globales
+        let llamadas = JSON.parse(localStorage.getItem('umes_registros_llamadas')) || [];
+        let idParaEliminar = null;
 
-            // Limpiar formulario (excepto fecha que suele ser la misma para varios ingresos)
+        // Elementos del DOM
+        const form = document.getElementById('callForm');
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const filtroMes = document.getElementById('filtroMes');
+        const btnMostrarTodos = document.getElementById('btnMostrarTodos');
+
+        // Elementos del Modal
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Configurar mes actual por defecto
+        const fechaActual = new Date();
+        const mesActualFormato = fechaActual.getFullYear() + '-' + String(fechaActual.getMonth() + 1).padStart(2, '0');
+        filtroMes.value = mesActualFormato;
+
+        // Formatear fecha para visualización (YYYY-MM-DD a DD/MMM/YYYY)
+        function formatearFecha(fechaString) {
+            const dateObj = new Date(fechaString + 'T12:00:00');
+            return dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        // Renderizar tabla
+        function renderTable() {
+            tableBody.innerHTML = '';
+            const filtro = filtroMes.value;
+
+            // Ordenar de más reciente a más antigua
+            const llamadasOrdenadas = [...llamadas].sort((a, b) => {
+                const dateA = new Date(`${a.fecha}T${a.hora}`);
+                const dateB = new Date(`${b.fecha}T${b.hora}`);
+                return dateB - dateA;
+            });
+
+            let llamadasFiltradas = llamadasOrdenadas;
+            if (filtro) {
+                llamadasFiltradas = llamadasOrdenadas.filter(l => l.fecha.startsWith(filtro));
+            }
+
+            if (llamadasFiltradas.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+
+                llamadasFiltradas.forEach(llamada => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'table-row hover:bg-gray-100 transition duration-150';
+                    tr.innerHTML = `
+                        <td>${formatearFecha(llamada.fecha)}</td>
+                        <td>${llamada.hora}</td>
+                        <td>${llamada.numero}</td>
+                        <td class="font-medium">${llamada.nombre}</td>
+                        <td class="whitespace-normal min-w-[200px]">${llamada.consulta}</td>
+                        <td>${llamada.persona}</td>
+                        <td>${llamada.extension}</td>
+                        <td>${llamada.recepcionista}</td>
+                        <td>
+                            <button onclick="abrirModalEliminar('${llamada.id}')" class="text-red-600 hover:text-red-800 font-medium text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50 transition duration-150">
+                                Eliminar
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+        }
+
+        // Evento Guardar
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const nuevaLlamada = {
+                id: Date.now().toString(),
+                recepcionista: document.getElementById('recepcionista').value,
+                fecha: document.getElementById('fecha').value,
+                hora: document.getElementById('hora').value,
+                numero: document.getElementById('numero').value || 'N/A',
+                nombre: document.getElementById('nombre').value,
+                consulta: document.getElementById('consulta').value,
+                persona: document.getElementById('persona').value || 'N/A',
+                extension: document.getElementById('extension').value || 'N/A'
+            };
+
+            llamadas.push(nuevaLlamada);
+            localStorage.setItem('umes_registros_llamadas', JSON.stringify(llamadas));
+
+            // Limpiar formulario (excepto recepcionista y fecha)
             document.getElementById('hora').value = '';
             document.getElementById('numero').value = '';
             document.getElementById('nombre').value = '';
             document.getElementById('consulta').value = '';
             document.getElementById('persona').value = '';
             document.getElementById('extension').value = '';
+
+            renderTable();
         });
 
-        function deleteRow(btn) {
-            if(confirm('¿Estás seguro de eliminar este registro?')) {
-                const row = btn.closest('tr');
-                row.remove();
+        // Funciones del Modal
+        window.abrirModalEliminar = function(id) {
+            idParaEliminar = id;
+            deleteModal.classList.remove('hidden');
+        }
 
-                // Mostrar estado vacío si no hay filas
-                const tbody = document.getElementById('tableBody');
-                if (tbody.children.length === 0) {
-                    document.getElementById('emptyState').style.display = 'block';
-                }
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            idParaEliminar = null;
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (idParaEliminar) {
+                llamadas = llamadas.filter(l => l.id !== idParaEliminar);
+                localStorage.setItem('umes_registros_llamadas', JSON.stringify(llamadas));
+                renderTable();
+                deleteModal.classList.add('hidden');
+                idParaEliminar = null;
             }
+        });
+
+        // Filtros
+        filtroMes.addEventListener('change', renderTable);
+
+        btnMostrarTodos.addEventListener('click', () => {
+            filtroMes.value = '';
+            renderTable();
+        });
+
+        // Exportar a Excel (CSV)
+        window.exportToExcel = function() {
+            const filtro = filtroMes.value;
+            let datosExportar = llamadas;
+
+            if (filtro) {
+                datosExportar = llamadas.filter(l => l.fecha.startsWith(filtro));
+            }
+
+            if(datosExportar.length === 0) {
+                alert('No hay registros para exportar en este período.');
+                return;
+            }
+
+            let csvContent = "Fecha,Hora,Número,Nombre,Consulta / Trámite,Persona Indicada,Extensión,Recepcionista\n";
+
+            datosExportar.forEach(l => {
+                const fila = [
+                    formatearFecha(l.fecha),
+                    l.hora,
+                    `"${l.numero}"`,
+                    `"${l.nombre.replace(/"/g, '""')}"`,
+                    `"${l.consulta.replace(/"/g, '""')}"`,
+                    `"${l.persona.replace(/"/g, '""')}"`,
+                    `"${l.extension}"`,
+                    `"${l.recepcionista}"`
+                ];
+                csvContent += fila.join(",") + "\n";
+            });
+
+            // BOM para UTF-8 (Tildes correctas en Excel)
+            const BOM = "\uFEFF";
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Llamadas_UMES_${filtro || 'Todas'}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        function exportToExcel() {
-            alert('Función de exportación a Excel simulada. Aquí se integraría una librería como SheetJS.');
-        }
+        // Carga inicial
+        renderTable();
     </script>
 </body>
 </html>
+

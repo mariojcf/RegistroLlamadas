@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Llamadas - UMES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos específicos para replicar la tabla de la imagen */
+        .table-header th {
+            border-right: 1px solid white;
+            padding: 12px 16px;
+            font-weight: bold;
+        }
+        .table-header th:last-child {
+            border-right: none;
+        }
+        .table-row td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 16px;
+            color: #374151;
+        }
+        .table-row:nth-child(even) {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <!-- Encabezado -->
+    <header class="flex items-center bg-[#00553d] px-8 py-4 shadow-md">
+        <div class="bg-white rounded-md p-2 mr-5 flex items-center justify-center h-14 w-14">
+            <img src="logo.png" alt="Logo UMES" class="h-full w-full object-contain">
+        </div>
+        <h1 class="text-white text-2xl font-bold tracking-wide">Registro de llamadas</h1>
+    </header>
+
+    <main class="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 pb-12">
+
+        <!-- Tarjeta de Ingreso de Datos -->
+        <div class="bg-white rounded-lg shadow-sm p-8 mb-6">
+            <h2 class="text-[#00553d] text-2xl font-bold mb-6 border-b border-gray-300 pb-2">Ingreso de Nueva Llamada</h2>
+
+            <form id="callForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                        <input type="date" id="fecha" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                        <input type="time" id="hora" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                        <input type="tel" id="numero" placeholder="Ej. 1234-5678" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                        <input type="text" id="nombre" placeholder="Nombre de quien llama" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Consulta / Trámite</label>
+                        <input type="text" id="consulta" placeholder="Motivo de la llamada" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Persona Indicada</label>
+                        <input type="text" id="persona" placeholder="Con quién desea hablar" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Extensión</label>
+                        <input type="text" id="extension" placeholder="Ej. 101" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                    </div>
+                </div>
+
+                <!-- Recepcionista oculto (tú, trabajando solo) -->
+                <input type="hidden" id="recepcionista" value="Mario">
+
+                <div class="pt-2">
+                    <button type="submit" class="bg-[#00553d] hover:bg-[#00402e] text-white font-medium py-2 px-6 rounded-md transition duration-200">
+                        Guardar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Barra de Controles / Filtros -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex flex-col sm:flex-row justify-between items-center border border-gray-200 gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-gray-700">Ver registros de:</span>
+                <input type="month" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#00553d]">
+                <button class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-1.5 px-4 rounded transition duration-200">
+                    Mostrar Todos
+                </button>
+            </div>
+            <button onclick="exportToExcel()" class="bg-[#217346] hover:bg-[#1a5c38] text-white text-sm font-medium py-1.5 px-4 rounded flex items-center gap-2 transition duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Exportar a Excel
+            </button>
+        </div>
+
+        <!-- Tabla de Registros -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left whitespace-nowrap">
+                    <thead class="bg-[#00553d] text-white table-header text-sm">
+                        <tr>
+                            <th>Día/Fecha</th>
+                            <th>Hora</th>
+                            <th>Número</th>
+                            <th>Nombres</th>
+                            <th>Consulta / Trámite</th>
+                            <th>Persona Indicada</th>
+                            <th>Ext.</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm">
+                        <!-- Los registros aparecerán aquí -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="text-center py-8 text-gray-500 text-sm">
+                    No hay registros de llamadas. Llena el formulario para agregar uno.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.getElementById('callForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Obtener valores
+            const fecha = document.getElementById('fecha').value;
+            const hora = document.getElementById('hora').value;
+            const numero = document.getElementById('numero').value || 'N/A';
+            const nombre = document.getElementById('nombre').value;
+            const consulta = document.getElementById('consulta').value;
+            const persona = document.getElementById('persona').value || 'N/A';
+            const extension = document.getElementById('extension').value || 'N/A';
+
+            // Formatear fecha de YYYY-MM-DD a DD/MM/YYYY
+            const dateObj = new Date(fecha + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Ocultar mensaje de estado vacío
+            document.getElementById('emptyState').style.display = 'none';
+
+            // Crear fila
+            const tbody = document.getElementById('tableBody');
+            const tr = document.createElement('tr');
+            tr.className = 'table-row hover:bg-gray-100 transition duration-150';
+
+            tr.innerHTML = `
+                <td>${formattedDate}</td>
+                <td>${hora}</td>
+                <td>${numero}</td>
+                <td class="font-medium">${nombre}</td>
+                <td class="whitespace-normal min-w-[200px]">${consulta}</td>
+                <td>${persona}</td>
+                <td>${extension}</td>
+                <td>
+                    <button onclick="deleteRow(this)" class="text-red-600 hover:text-red-800 font-medium text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50 transition duration-150">
+                        Eliminar
+                    </button>
+                </td>
+            `;
+
+            // Insertar al inicio de la tabla
+            tbody.insertBefore(tr, tbody.firstChild);
+
+            // Limpiar formulario (excepto fecha que suele ser la misma para varios ingresos)
+            document.getElementById('hora').value = '';
+            document.getElementById('numero').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('consulta').value = '';
+            document.getElementById('persona').value = '';
+            document.getElementById('extension').value = '';
+        });
+
+        function deleteRow(btn) {
+            if(confirm('¿Estás seguro de eliminar este registro?')) {
+                const row = btn.closest('tr');
+                row.remove();
+
+                // Mostrar estado vacío si no hay filas
+                const tbody = document.getElementById('tableBody');
+                if (tbody.children.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                }
+            }
+        }
+
+        function exportToExcel() {
+            alert('Función de exportación a Excel simulada. Aquí se integraría una librería como SheetJS.');
+        }
+    </script>
+</body>
+</html>

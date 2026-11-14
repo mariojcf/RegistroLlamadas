@@ -4,6 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Llamadas - UMES</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const img = new Image();
+            img.src = 'logo.png';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.roundRect(0, 0, 64, 64, 14);
+                ctx.fill();
+
+                const scale = Math.min(52 / img.width, 52 / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                ctx.drawImage(img, (64 - w) / 2, (64 - h) / 2, w, h);
+
+                const link = document.querySelector("link[rel~='icon']");
+                if (link) link.href = canvas.toDataURL('image/png');
+            };
+        });
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
